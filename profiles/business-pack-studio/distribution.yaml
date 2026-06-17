@@ -1,0 +1,14 @@
+name: business-pack-studio
+version: 1.0.0
+description: "Business Information Pack (BIP) PDF production. Turns client content"
+hermes_requires: ">=0.16.0"
+author: "Genius365 Design Team"
+license: "UNLICENSED"
+distribution_owned:
+  - SOUL.md
+  - references/DESIGN-OS.md
+  - skills/business-information-pack-production
+env_requires:
+  - name: OPENROUTER_API_KEY
+    description: "OpenRouter API key for model access (provider=openrouter)"
+    required: true

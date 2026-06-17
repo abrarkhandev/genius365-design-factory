@@ -1,0 +1,14 @@
+name: image-prompter
+version: 1.0.0
+description: "Image PROMPT engineering (the brain): writes precise generation prompts"
+hermes_requires: ">=0.16.0"
+author: "Genius365 Design Team"
+license: "UNLICENSED"
+distribution_owned:
+  - SOUL.md
+  - references/DESIGN-OS.md
+  - skills/image-prompt-engineering
+env_requires:
+  - name: OPENROUTER_API_KEY
+    description: "OpenRouter API key for model access (provider=openrouter)"
+    required: true

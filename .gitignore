@@ -1,0 +1,12 @@
+# Never commit secrets or local/user state.
+.env
+.env.*
+!.env.example
+*.tar.gz
+*.zip
+# client work + local outputs are not config
+/clients/
+# python / os cruft
+__pycache__/
+*.pyc
+.DS_Store

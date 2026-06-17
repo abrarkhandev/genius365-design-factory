@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>How the Design Factory Works — Automate Accelerator</title>
+<style>
+:root{
+  --paper:#FAF8F4; --ink:#1C1A24; --ink-soft:#52505E; --ink-faint:#928FA0;
+  --purple:#3D2A7D; --purple-deep:#291B54; --purple-soft:#ECE7F6;
+  --orange:#F2812B; --orange-soft:#FCE9D7;
+  --line:#E8E3DA; --surface:#F3F0E9; --white:#fff; --ok:#2E7D52;
+  --serif:Charter,"Bitstream Charter","Iowan Old Style",Palatino,Georgia,serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,sans-serif;
+  --mono:"JetBrains Mono","SF Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+  font-size:17px;line-height:1.65;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+
+/* header */
+.topbar{position:sticky;top:0;z-index:20;background:rgba(250,248,244,.92);backdrop-filter:saturate(160%) blur(8px);
+  border-bottom:1px solid var(--line)}
+.topbar .inner{max-width:1080px;margin:0 auto;padding:12px 28px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.topbar .mark{display:flex;align-items:center;gap:10px;font-weight:700;font-size:14px;letter-spacing:-.01em}
+.topbar .slash{color:var(--orange);font-weight:800}
+.topbar .for{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint)}
+.topbar nav{display:flex;gap:18px;font-size:13px}
+.topbar nav a{color:var(--ink-soft);text-decoration:none}
+.topbar nav a:hover{color:var(--purple)}
+@media(max-width:860px){.topbar nav{display:none}}
+
+.wrap{max-width:1080px;margin:0 auto;padding:0 28px}
+section{padding:56px 0;border-bottom:1px solid var(--line)}
+section:last-of-type{border-bottom:0}
+.kicker{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--orange);font-weight:700;margin:0 0 12px}
+h1{font-family:var(--serif);font-weight:700;font-size:3.1rem;line-height:1.05;letter-spacing:-.015em;margin:0 0 18px;max-width:18ch}
+h2{font-family:var(--serif);font-weight:700;font-size:2rem;line-height:1.12;letter-spacing:-.01em;margin:0 0 14px}
+h3{font-size:1.18rem;font-weight:700;margin:0 0 6px}
+p{margin:0 0 1rem;max-width:68ch}
+.lead{font-size:1.22rem;line-height:1.55;color:var(--ink-soft);max-width:60ch}
+.muted{color:var(--ink-soft)}
+strong{font-weight:700}
+.tag{font-family:var(--mono);font-size:11px;color:var(--purple);background:var(--purple-soft);border-radius:5px;padding:2px 7px;letter-spacing:.02em}
+
+/* hero */
+.hero{padding-top:64px}
+.hero .lead{margin-bottom:28px}
+.bigidea{display:flex;gap:18px;align-items:flex-start;background:var(--purple-deep);color:#fff;border-radius:16px;padding:26px 30px;max-width:760px}
+.bigidea .bi-ico{flex:0 0 auto;width:44px;height:44px;border-radius:12px;background:var(--orange);display:flex;align-items:center;justify-content:center}
+.bigidea b{color:#fff}
+.bigidea .bi-t{font-family:var(--serif);font-size:1.35rem;line-height:1.3;margin:0 0 4px}
+.bigidea p{color:#D9D4E8;margin:0;font-size:.98rem}
+
+/* pipeline */
+.pipeline{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;margin:8px 0 6px}
+.stage{flex:1 1 0;min-width:118px;background:var(--white);border:1.5px solid var(--purple-soft);border-radius:12px;
+  padding:16px 14px;display:flex;flex-direction:column;gap:7px;text-align:left}
+.stage .s-ico{width:30px;height:30px;color:var(--purple)}
+.stage .s-name{font-weight:700;font-size:15px}
+.stage .s-sub{font-size:12.5px;color:var(--ink-faint);line-height:1.4}
+.stage.done{border-color:var(--ok);background:#F1F8F3}
+.stage.done .s-name{color:var(--ok)}
+.gate{flex:1.3 1 0;min-width:140px;background:var(--orange);color:#3a1d00;border-radius:12px;padding:16px 14px;
+  display:flex;flex-direction:column;gap:6px;justify-content:center;box-shadow:0 4px 18px rgba(242,129,43,.28)}
+.gate .g-ico{width:26px;height:26px}
+.gate .g-name{font-weight:800;font-size:14.5px;line-height:1.25}
+.gate .g-sub{font-size:12px;font-weight:600;opacity:.85}
+.arrow{display:flex;align-items:center;color:var(--ink-faint);font-size:20px;font-weight:700}
+.cap{font-size:13.5px;color:var(--ink-faint);margin-top:14px;font-style:italic}
+@media(max-width:760px){.pipeline{flex-direction:column}.arrow{transform:rotate(90deg);height:14px;justify-content:center}}
+
+/* stage detail cards */
+.stages{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:8px}
+.scard{background:var(--white);border:1px solid var(--line);border-radius:14px;padding:24px 24px 22px;position:relative;overflow:hidden}
+.scard .num{font-family:var(--serif);font-size:2.4rem;line-height:1;color:var(--purple-soft);font-weight:700;position:absolute;top:16px;right:20px}
+.scard .head{display:flex;align-items:center;gap:11px;margin-bottom:8px}
+.scard .head svg{width:26px;height:26px;color:var(--orange)}
+.scard h3{margin:0}
+.scard p{font-size:15px;margin:0 0 .5rem}
+.scard .io{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;font-family:var(--mono);font-size:11.5px}
+.scard .io span{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:3px 8px;color:var(--ink-soft)}
+.guard{margin-top:18px;background:var(--purple-soft);border:1px solid #DAD0EE;border-left:4px solid var(--purple);border-radius:12px;padding:20px 24px}
+.guard h3{color:var(--purple-deep)}
+.guard p{font-size:15px;margin:0}
+@media(max-width:760px){.stages{grid-template-columns:1fr}}
+
+/* team */
+.teamgroup{margin-top:22px}
+.teamgroup .gl{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;margin:0 0 12px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.roster{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.role{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:18px}
+.role .r-top{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.role .r-ico{width:34px;height:34px;flex:0 0 auto;border-radius:9px;background:var(--purple-soft);color:var(--purple);display:flex;align-items:center;justify-content:center}
+.role .r-ico svg{width:19px;height:19px}
+.role h3{font-size:1rem;margin:0;line-height:1.2}
+.role .r-id{font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);margin-top:1px}
+.role p{font-size:13.5px;color:var(--ink-soft);margin:0}
+.role.lead-role{border-color:#DAD0EE;background:#FBFAFE}
+@media(max-width:860px){.roster{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.roster{grid-template-columns:1fr}}
+
+/* deliverables + real examples */
+.delivers{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:8px}
+.deliver{background:var(--white);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+.deliver .shot{background:var(--surface);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.deliver .shot img{display:block;width:100%;height:auto}
+.deliver.wide .shot img{width:100%}
+.deliver .body{padding:18px 20px 20px}
+.deliver .d-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:5px;flex-wrap:wrap}
+.deliver h3{margin:0;font-size:1.1rem}
+.deliver .by{font-family:var(--mono);font-size:11px;color:var(--orange);font-weight:700;white-space:nowrap}
+.deliver p{font-size:14px;color:var(--ink-soft);margin:0}
+.deliver .realtag{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ok);background:#EAF5EE;border:1px solid #CDE7D6;border-radius:5px;padding:2px 7px;margin-bottom:9px}
+.deliver.placeholder .shot{height:150px;color:var(--ink-faint);font-family:var(--mono);font-size:12px}
+@media(max-width:760px){.delivers{grid-template-columns:1fr}}
+
+/* worked example timeline */
+.flow{max-width:760px;margin-top:8px}
+.fstep{display:flex;gap:18px;padding-bottom:22px;position:relative}
+.fstep:not(:last-child)::before{content:"";position:absolute;left:17px;top:38px;bottom:-4px;width:2px;background:var(--line)}
+.fstep .fn{flex:0 0 auto;width:36px;height:36px;border-radius:50%;background:var(--purple);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;z-index:1}
+.fstep.final .fn{background:var(--ok)}
+.fstep .ft{padding-top:5px}
+.fstep .ft b{display:block;font-size:15px;margin-bottom:1px}
+.fstep .ft span{font-size:14px;color:var(--ink-soft)}
+
+/* guarantees */
+.guars{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:8px}
+.guar{display:flex;gap:13px;align-items:flex-start;background:var(--white);border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+.guar .ok{flex:0 0 auto;width:26px;height:26px;border-radius:50%;background:var(--ok);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px}
+.guar b{display:block;font-size:15px;margin-bottom:2px}
+.guar span{font-size:13.5px;color:var(--ink-soft)}
+@media(max-width:640px){.guars{grid-template-columns:1fr}}
+
+footer{padding:38px 0 60px;color:var(--ink-faint);font-size:13px;font-family:var(--mono)}
+footer .slash{color:var(--orange)}
+
+@media print{
+  .topbar{position:static}
+  section{break-inside:avoid;padding:28px 0}
+  .bigidea{box-shadow:none}
+  body{font-size:12pt}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar"><div class="inner">
+  <div class="mark">The Design Factory <span class="slash">//</span> <span style="font-weight:500;color:var(--ink-soft)">how it works</span></div>
+  <nav>
+    <a href="#flow">The flow</a>
+    <a href="#stages">Stages</a>
+    <a href="#team">The team</a>
+    <a href="#work">What you get</a>
+    <a href="#example">Example</a>
+  </nav>
+  <div class="for">For Automate Accelerator</div>
+</div></div>
+
+<!-- HERO -->
+<section class="hero"><div class="wrap">
+  <p class="kicker">Prepared for Vaseem &middot; Automate Accelerator</p>
+  <h1>How the Design Factory works</h1>
+  <p class="lead">A simple way to turn your raw inputs &mdash; a brief, your brand guidelines, call notes, a few links &mdash; into finished, on-brand design work, produced quickly and checked by a person before it ever reaches a client.</p>
+  <p>This is a walk through the <strong>flow</strong>, not the technology: what goes in, how it is processed, who does what, and what comes out. It covers websites and landing pages, Business Information Packs, LinkedIn carousels and banners, magazines and editorial, and email newsletters &mdash; with real examples from your own brand further down.</p>
+  <div class="bigidea">
+    <div class="bi-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#3a1d00" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/><circle cx="12" cy="12" r="3.2"/></svg></div>
+    <div>
+      <p class="bi-t">The system does the heavy lifting. <b>A person owns the final 20%</b> &mdash; taste, accuracy, and approval.</p>
+      <p>Nothing is delivered without a human signing off on it first. The bar is not &ldquo;a computer made it&rdquo; &mdash; it is &ldquo;a discerning client would happily pay for it.&rdquo;</p>
+    </div>
+  </div>
+</div></section>
+
+<!-- FLOW AT A GLANCE -->
+<section id="flow"><div class="wrap">
+  <p class="kicker">The flow at a glance</p>
+  <h2>From your inputs to a finished, approved deliverable</h2>
+  <p class="muted">Every piece of work moves through the same path. Only the first step needs you.</p>
+  <div class="pipeline">
+    <div class="stage">
+      <svg class="s-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h18l-7 8v6l-4 2v-8z"/></svg>
+      <div class="s-name">1 &middot; Intake</div><div class="s-sub">You hand over whatever you have</div>
+    </div>
+    <div class="arrow">&rarr;</div>
+    <div class="stage">
+      <svg class="s-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3a4 4 0 0 0-4 4 4 4 0 0 0-1 7 4 4 0 0 0 5 4M15 3a4 4 0 0 1 4 4 4 4 0 0 1 1 7 4 4 0 0 1-5 4M9 3v18M15 3v18"/></svg>
+      <div class="s-name">2 &middot; Digest</div><div class="s-sub">Inputs become verified truth + a brand playbook</div>
+    </div>
+    <div class="arrow">&rarr;</div>
+    <div class="stage">
+      <svg class="s-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>
+      <div class="s-name">3 &middot; Strategy</div><div class="s-sub">The angle and the distinctive idea are set</div>
+    </div>
+    <div class="arrow">&rarr;</div>
+    <div class="stage">
+      <svg class="s-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V9l6 3V9l6 3V8l6 3v10z"/></svg>
+      <div class="s-name">4 &middot; Production</div><div class="s-sub">The right studio builds the deliverable</div>
+    </div>
+    <div class="arrow">&rarr;</div>
+    <div class="gate">
+      <svg class="g-ico" viewBox="0 0 24 24" fill="none" stroke="#3a1d00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 7.5-8 9-4.5-1.5-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>
+      <div class="g-name">Quality check + human sign-off</div>
+      <div class="g-sub">The guardrail before anything ships</div>
+    </div>
+    <div class="arrow">&rarr;</div>
+    <div class="stage done">
+      <svg class="s-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>
+      <div class="s-name">Delivered</div><div class="s-sub">On brand, on time, every claim true</div>
+    </div>
+  </div>
+  <p class="cap">The orange step is the one that protects you: an automatic quality check, then a real person, every single time.</p>
+</div></section>
+
+<!-- FOUR STAGES -->
+<section id="stages"><div class="wrap">
+  <p class="kicker">The four stages, explained</p>
+  <h2>What actually happens at each step</h2>
+  <div class="stages">
+    <div class="scard">
+      <span class="num">1</span>
+      <div class="head"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h18l-7 8v6l-4 2v-8z"/></svg><h3>Intake &mdash; we capture everything</h3></div>
+      <p>You hand over whatever you have: a brief, brand guidelines, your logo, website copy, call recordings, example sites you like. Nothing needs to be polished or organised.</p>
+      <p class="muted" style="font-size:14px">This is the only step that needs your time.</p>
+      <div class="io"><span>brief</span><span>brand guide</span><span>logo + assets</span><span>call notes</span><span>reference links</span></div>
+    </div>
+    <div class="scard">
+      <span class="num">2</span>
+      <div class="head"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3a4 4 0 0 0-4 4 4 4 0 0 0-1 7 4 4 0 0 0 5 4M15 3a4 4 0 0 1 4 4 4 4 0 0 1 1 7 4 4 0 0 1-5 4M9 3v18M15 3v18"/></svg><h3>Digest &mdash; we turn it into truth</h3></div>
+      <p>Every fact, number and brand detail is pulled into a single <strong>source of truth</strong> and a <strong>brand playbook</strong> &mdash; your colours, fonts, voice, and the things that make you distinctly you.</p>
+      <p class="muted" style="font-size:14px"><strong>The rule:</strong> nothing is invented. If a statistic, logo or claim is not in what you gave us, it does not go on the page.</p>
+      <div class="io"><span>fact bank</span><span>brand playbook</span><span>what is missing (flagged, not guessed)</span></div>
+    </div>
+    <div class="scard">
+      <span class="num">3</span>
+      <div class="head"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg><h3>Strategy &mdash; we set the approach</h3></div>
+      <p>Before any design happens, we decide the creative direction: the message, the structure, and the <strong>one distinctive idea</strong> that makes the piece feel like Automate Accelerator and not a template anyone could have made.</p>
+      <div class="io"><span>the angle</span><span>the structure</span><span>the distinctive move</span></div>
+    </div>
+    <div class="scard">
+      <span class="num">4</span>
+      <div class="head"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V9l6 3V9l6 3V8l6 3v10z"/></svg><h3>Production &mdash; the specialist builds it</h3></div>
+      <p>The job is routed to the studio that owns that format &mdash; web, documents, social, editorial or email &mdash; plus an image team for any custom visuals. Several pieces can be produced at the same time.</p>
+      <div class="io"><span>the right studio</span><span>custom imagery</span><span>many pieces in parallel</span></div>
+    </div>
+  </div>
+  <div class="guard">
+    <h3>The guardrail &mdash; quality check + human sign-off</h3>
+    <p>Every finished piece runs through an <strong>automatic quality check</strong> that catches anything off-brand, broken, or unverified &mdash; including any number that does not trace back to a real fact. Then a <strong>person reviews and signs off</strong>. Only after both does it reach you. This is what makes the output consistent and safe to put in front of your clients.</p>
+  </div>
+</div></section>
+
+<!-- THE TEAM -->
+<section id="team"><div class="wrap">
+  <p class="kicker">The team of specialists</p>
+  <h2>Who does what</h2>
+  <p class="muted">Think of it as a full studio of specialists, each with one job they are very good at. The names in grey are simply what each one is called in the system.</p>
+
+  <div class="teamgroup">
+    <p class="gl">Direction &amp; strategy</p>
+    <div class="roster">
+      <div class="role lead-role"><div class="r-top"><div class="r-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5l8 4 8-4v14M4 19h16M9 13l3 1.5L15 13"/></svg></div><div><h3>Intake &amp; Strategy</h3><div class="r-id">intake-strategist</div></div></div><p>Meets the brief, builds your brand playbook and fact bank, and finds the right references. Every project starts here.</p></div>
+      <div class="role lead-role"><div class="r-top"><div class="r-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18M3 12h18M3 17h12"/></svg></div><div><h3>Creative Director</h3><div class="r-id">design-director</div></div></div><p>Runs the floor &mdash; assigns each job to the right studio, holds the standard, runs the quality checks and owns the final sign-off.</p></div>
+      <div class="role"><div class="r-top"><div class="r-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 7.5-8 9-4.5-1.5-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg></div><div><h3>Quality Control</h3><div class="r-id">design-qa</div></div></div><p>Checks every piece against the standards &mdash; on-brand, accurate, nothing broken &mdash; before it is allowed to move forward.</p></div>
+    </div>
+  </div>
+
+  <div class="teamgroup">
+    <p class="gl">The studios &mdash; the makers</p>
+    <div class="roster">
+      <div class="role"><div class="r-top"><div class="r-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 8h18M8 21h8"/></svg></div><div><h3>Web Studio</h3><div class="r-id">landing-page-studio</div></div></div><p>Websites and landing pages &mdash; built fresh or rebuilt from a reference you admire.</p></div>
+      <div class="role"><div class="r-top"><div class="r-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6M9 13h7M9 17h7"/></svg></div><div><h3>Document Studio</h3><div class="r-id">business-pack-studio</div></div></div><p>Business Information Packs and sales decks &mdash; premium, client-ready PDFs.</p></div>
+      <div class="role"><div class="r-top"><div class="r-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 17v-5M12 17V8M17 17v-3"/></svg></div><div><h3>Social Studio</h3><div class="r-id">linkedin-studio</div></div></div><p>LinkedIn carousels, banners, infographics and image posts.</p></div>
+      <div class="role"><div class="r-top"><div class="r-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v14H4z"/><path d="M4 8h7v11M14 8h3M14 12h3"/></svg></div><div><h3>Editorial Studio</h3><div class="r-id">print-editorial-studio</div></div></div><p>Magazines, brochures, reports and editorial layouts &mdash; print-ready.</p></div>
+      <div class="role"><div class="r-top"><div class="r-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></div><div><h3>Email Studio</h3><div class="r-id">email-newsletter-studio</div></div></div><p>Newsletters and email campaigns that render correctly in every inbox.</p></div>
+      <div class="role" style="background:var(--surface)"><div class="r-top"><div class="r-ico" style="background:var(--orange-soft);color:var(--orange)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M3 12h18"/></svg></div><div><h3>&hellip; more streams</h3><div class="r-id">one studio per format</div></div></div><p>New formats plug in as new studios &mdash; the flow around them stays the same.</p></div>
+    </div>
+  </div>
+
+  <div class="teamgroup">
+    <p class="gl">The image team</p>
+    <div class="roster">
+      <div class="role"><div class="r-top"><div class="r-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12h8M12 8v8"/></svg></div><div><h3>Art Director, Imagery</h3><div class="r-id">image-prompter</div></div></div><p>Designs the brief for any custom image &mdash; what it shows, the mood, and how it fits your brand. The brain of the visuals.</p></div>
+      <div class="role"><div class="r-top"><div class="r-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.8"/><path d="M5 18l5-5 4 4 2-2 3 3"/></svg></div><div><h3>Image Studio</h3><div class="r-id">image-asset-lab</div></div></div><p>Produces the custom imagery to that brief. Real headlines and numbers always stay as live text &mdash; never baked into a picture.</p></div>
+    </div>
+  </div>
+</div></section>
+
+<!-- WHAT YOU GET + REAL EXAMPLES -->
+<section id="work"><div class="wrap">
+  <p class="kicker">What you can get &mdash; with real examples from your brand</p>
+  <h2>Five formats, already proven on Automate Accelerator</h2>
+  <p class="muted">Each of these was produced by the factory from your real brand and your real facts. Nothing below is a stock template or a mock-up.</p>
+  <div class="delivers">
+
+    <div class="deliver wide">
+      <div class="shot"><img src="{{AA_BANNER}}" alt="Automate Accelerator LinkedIn banner"></div>
+      <div class="body">
+        <span class="realtag">Real AA work</span>
+        <div class="d-top"><h3>LinkedIn banner</h3><span class="by">Social Studio</span></div>
+        <p>Profile and company banners, sized exactly for LinkedIn, with your wordmark and message kept perfectly legible.</p>
+      </div>
+    </div>
+
+    <div class="deliver">
+      <div class="shot"><img src="{{AA_BIP}}" alt="Automate Accelerator Business Information Pack cover"></div>
+      <div class="body">
+        <span class="realtag">Real AA work</span>
+        <div class="d-top"><h3>Business Information Pack</h3><span class="by">Document Studio</span></div>
+        <p>A premium sales and explainer deck &mdash; the document a buyer reads before they say yes.</p>
+      </div>
+    </div>
+
+    <div class="deliver">
+      <div class="shot"><img src="{{AA_CAROUSEL}}" alt="Automate Accelerator LinkedIn carousel slide"></div>
+      <div class="body">
+        <span class="realtag">Real AA work</span>
+        <div class="d-top"><h3>LinkedIn carousel</h3><span class="by">Social Studio</span></div>
+        <p>A multi-slide post that earns the scroll &mdash; one idea per slide, leading with your real results.</p>
+      </div>
+    </div>
+
+    <div class="deliver">
+      <div class="shot"><img src="{{AA_MAGAZINE}}" alt="Automate Accelerator magazine feature"></div>
+      <div class="body">
+        <span class="realtag">Real AA work</span>
+        <div class="d-top"><h3>Magazine &amp; editorial</h3><span class="by">Editorial Studio</span></div>
+        <p>Long-form, magazine-grade layouts &mdash; thought-leadership that looks like a publication, not a flyer.</p>
+      </div>
+    </div>
+
+    <div class="deliver">
+      <div class="shot"><img src="{{AA_LANDING}}" alt="Automate Accelerator landing page"></div>
+      <div class="body">
+        <span class="realtag">Real AA work</span>
+        <div class="d-top"><h3>Website &amp; landing page</h3><span class="by">Web Studio</span></div>
+        <p>Conversion-focused pages, responsive on every screen, animated where it helps the story.</p>
+      </div>
+    </div>
+
+    <div class="deliver placeholder">
+      <div class="shot">example available on request</div>
+      <div class="body">
+        <div class="d-top"><h3>Email newsletter</h3><span class="by">Email Studio</span></div>
+        <p>Newsletters and campaigns built to render correctly across every email app.</p>
+      </div>
+    </div>
+
+  </div>
+</div></section>
+
+<!-- WORKED EXAMPLE -->
+<section id="example"><div class="wrap">
+  <p class="kicker">A worked example</p>
+  <h2>How your LinkedIn carousel was made</h2>
+  <p class="muted">The same flow, followed end to end on one real Automate Accelerator piece.</p>
+  <div class="flow">
+    <div class="fstep"><div class="fn">1</div><div class="ft"><b>Intake</b><span>We used your brand guidelines, website copy and real campaign results.</span></div></div>
+    <div class="fstep"><div class="fn">2</div><div class="ft"><b>Digest</b><span>We pulled your real numbers &mdash; 54,486+ appointments booked, 850+ businesses served &mdash; and locked your purple-and-orange brand into the playbook.</span></div></div>
+    <div class="fstep"><div class="fn">3</div><div class="ft"><b>Strategy</b><span>We chose a &ldquo;show the proof&rdquo; angle: open on the headline number, one idea per slide, close with a clear call to action.</span></div></div>
+    <div class="fstep"><div class="fn">4</div><div class="ft"><b>Production</b><span>The Social Studio built an eight-slide carousel. Every word stays sharp, editable text &mdash; never trapped inside an image.</span></div></div>
+    <div class="fstep"><div class="fn">5</div><div class="ft"><b>Quality + sign-off</b><span>Automatic checks confirmed nothing was off-brand, broken, or invented; then a person reviewed and approved it.</span></div></div>
+    <div class="fstep final"><div class="fn"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" width="17" height="17"><path d="M5 12l5 5L20 7"/></svg></div><div class="ft"><b>Delivered</b><span>A ready-to-post carousel &mdash; on brand, and every claim on it is true.</span></div></div>
+  </div>
+</div></section>
+
+<!-- GUARANTEES -->
+<section><div class="wrap">
+  <p class="kicker">Why it holds up</p>
+  <h2>The promises behind every deliverable</h2>
+  <div class="guars">
+    <div class="guar"><div class="ok">&#10003;</div><div><b>It never invents facts</b><span>Every number, claim and logo traces back to something you actually provided.</span></div></div>
+    <div class="guar"><div class="ok">&#10003;</div><div><b>It is always on brand</b><span>Your colours, fonts and voice are locked in the playbook and applied to every piece.</span></div></div>
+    <div class="guar"><div class="ok">&#10003;</div><div><b>Quality is checked, not assumed</b><span>An automatic gate catches off-brand, broken or unverified work before any human even sees it.</span></div></div>
+    <div class="guar"><div class="ok">&#10003;</div><div><b>A person always signs off</b><span>No deliverable reaches a client without a human review and approval.</span></div></div>
+    <div class="guar"><div class="ok">&#10003;</div><div><b>It moves fast and scales</b><span>Many pieces can be produced in parallel, without dropping the standard.</span></div></div>
+    <div class="guar"><div class="ok">&#10003;</div><div><b>It is consistent</b><span>The same flow runs every time, so the tenth piece is as good as the first.</span></div></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  The Design Factory <span class="slash">//</span> prepared for Automate Accelerator &middot; a flow-level overview &middot; 2026
+</div></footer>
+
+</body>
+</html>
