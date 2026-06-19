@@ -11,7 +11,7 @@ distributions** so the whole team installs once and pulls updates with one comma
 - `souls/` — the constitution (`DESIGN-OS.md`) and the source souls.
 - `plan/` — the master plan and the team walkthrough.
 - `sync.sh` (macOS/Linux) and `sync.ps1` (Windows PowerShell) — installs/updates every profile.
-- `.env.example` — the keys you need (filled locally, never committed).
+- `.env.example` — the one key you need (your OpenAI key; filled locally, never committed).
 
 ## Secrets — read first
 **No API keys are in this repo.** Keys live only in your local `~/.hermes/.env`,
@@ -37,11 +37,11 @@ cp .env.example ~/.hermes/.env   # then paste the real keys
    ```
    On a fresh machine, also copy `.env.example` to `~/.hermes/.env` and paste the keys
    (if you already use Hermes, your keys are already there — skip this).
-3. (One-time, recommended settings — not shipped, to keep secrets out of git):
+3. Models: **nothing to set.** Each profile inherits the model + provider you already
+   use in Hermes (your OpenAI / Codex setup), so they run on your existing key.
+   Image generation uses **OpenAI GPT Image 2** on that same key.
+   (Optional) add the shadcn component MCP to the web + reference profiles:
    ```bash
-   # point the web builder at the validated model
-   #   edit ~/.hermes/profiles/landing-page-studio/config.yaml -> model.default: z-ai/glm-5.2
-   # add the shadcn component MCP to the web + reference profiles
    landing-page-studio mcp add shadcn --command npx --args -y shadcn@latest mcp
    intake-strategist  mcp add shadcn --command npx --args -y shadcn@latest mcp
    ```
@@ -58,7 +58,7 @@ Your keys, memories and sessions are preserved — only the souls/skills update.
 ```bash
 landing-page-studio -z "build a landing page for ..."   # one-shot
 landing-page-studio chat                                  # interactive
-# deliver-grade override: append  -m anthropic/claude-opus-4.8 --provider openrouter
+# override the model for one run: append  -m <model>  (e.g. a higher-tier OpenAI model)
 ```
 
 ## Maintainer — publishing an update

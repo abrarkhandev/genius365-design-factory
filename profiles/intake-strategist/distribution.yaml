@@ -1,5 +1,5 @@
 name: intake-strategist
-version: 1.0.0
+version: 1.1.0
 description: "Client intake and creative strategy: builds the per-client DESIGN.md"
 hermes_requires: ">=0.16.0"
 author: "Genius365 Design Team"
@@ -9,6 +9,6 @@ distribution_owned:
   - references/DESIGN-OS.md
   - skills/client-intake-and-strategy
 env_requires:
-  - name: OPENROUTER_API_KEY
-    description: "OpenRouter API key for model access (provider=openrouter)"
+  - name: OPENAI_API_KEY
+    description: "OpenAI API key - your existing Hermes provider key (also used by GPT Image 2)"
     required: true

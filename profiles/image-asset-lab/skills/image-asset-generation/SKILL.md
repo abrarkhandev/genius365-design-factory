@@ -65,16 +65,15 @@ Image-model routing (verified June 2026 — confirm price at point of use, in pl
 
 Midjourney is excluded from automation (no official API) — manual-only, out of scope.
 
-### 3. Prototype lane (free) — resolve composition first
-Iterate composition, crop, and layout at near-zero cost on Cloudflare Workers AI (10,000 neurons/day free). The factory executor is `factory/scripts/image_gen_cloudflare.py`, which now defaults to **FLUX.2 [dev]** (`@cf/black-forest-labs/flux-2-dev`) — the current best free prototype model and a clear step up from schnell:
+### 3. Generation lane — resolve composition first
+Generate with the factory executor `factory/scripts/image_gen_openai.py`, which uses **OpenAI GPT Image 2** (`gpt-image-2`) on your existing `OPENAI_API_KEY` — no extra provider or key:
 ```bash
-uv run --no-project python factory/scripts/image_gen_cloudflare.py \
-  --prompt "<background / illustration only, no baked text>" \
-  --out clients/<client>/04-production/<asset>/assets/<name>.jpg \
-  --width 1280 --height 720 \
-  [--reference clients/<client>/02-source-truth/<logo-or-swatch>.png]
+uv run --no-project python factory/scripts/image_gen_openai.py \
+  --prompt "<background / illustration only, no baked text, no logos>" \
+  --out clients/<client>/04-production/<asset>/assets/<name>.png \
+  --size 1536x1024
 ```
-FLUX.2 [dev] uses a multipart request (prompt/steps/width/height + an optional `--reference` image for on-brand consistency) and returns JPEG. Pass `--model @cf/black-forest-labs/flux-1-schnell` for the faster legacy 8-step lane (which also honours `--seed` for exact regeneration); SDXL-Lightning and Leonardo Lucid Origin remain available as alternates. Reuse the seed `image-prompter` supplied where the model supports it so QA can regenerate a near-identical frame. Generate many candidates, then curate to the best ~5%; you are the art director, the model is a junior supplying raw material.
+`--size` takes 1024x1024, 1536x1024 (landscape) or 1024x1536 (portrait); GPT Image 2 supports up to 2K and aspect ratios from 3:1 to 1:3, and keeps character/object continuity across a batch. Use `--quality high` for delivery, lower while iterating. Real, load-bearing text always stays HTML/SVG and is never baked into the image. Generate several candidates, then curate to the best ~5%; you are the art director, the model is a junior supplying raw material. (The delivery-model table above lists alternatives such as Nano Banana Pro or FLUX.2 if you ever add those providers; on OpenAI, GPT Image 2 is both your prototype and delivery model.)
 
 Stop and reject any candidate that violates the anti-slop bans before it goes further:
 - default indigo/purple accents (`#6366f1 #4f46e5 #8b5cf6 #7c3aed`, hues ~250–280) where it is not genuinely the brand;
