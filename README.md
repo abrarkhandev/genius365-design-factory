@@ -10,7 +10,7 @@ distributions** so the whole team installs once and pulls updates with one comma
 - `factory/scripts/` — the generation + deterministic-QA scripts.
 - `souls/` — the constitution (`DESIGN-OS.md`) and the source souls.
 - `plan/` — the master plan and the team walkthrough.
-- `sync.sh` — installs/updates every profile.
+- `sync.sh` (macOS/Linux) and `sync.ps1` (Windows PowerShell) — installs/updates every profile.
 - `.env.example` — the keys you need (filled locally, never committed).
 
 ## Secrets — read first
@@ -24,11 +24,19 @@ cp .env.example ~/.hermes/.env   # then paste the real keys
 
 ## First-time setup (each member, ~5 min)
 1. Install Hermes (see hermes-agent.nousresearch.com) and confirm `hermes --version` (>= 0.16.0).
-2. Clone this repo, then:
+2. Clone this repo, `cd` into it, then run the sync for your OS.
+   **Run each line separately** — Windows PowerShell does not support `&&`.
+
+   **macOS / Linux:**
    ```bash
-   ./sync.sh                      # installs all profiles + aliases
-   cp .env.example ~/.hermes/.env # paste keys from the password manager
+   ./sync.sh
    ```
+   **Windows (PowerShell):**
+   ```powershell
+   .\sync.ps1
+   ```
+   On a fresh machine, also copy `.env.example` to `~/.hermes/.env` and paste the keys
+   (if you already use Hermes, your keys are already there — skip this).
 3. (One-time, recommended settings — not shipped, to keep secrets out of git):
    ```bash
    # point the web builder at the validated model
@@ -42,7 +50,7 @@ cp .env.example ~/.hermes/.env   # then paste the real keys
 When the maintainer pushes new souls/skills:
 ```bash
 git pull
-./sync.sh        # runs `hermes profile update` for every profile
+./sync.sh        # macOS/Linux   —   Windows PowerShell: .\sync.ps1
 ```
 Your keys, memories and sessions are preserved — only the souls/skills update.
 
