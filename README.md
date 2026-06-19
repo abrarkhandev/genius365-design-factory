@@ -10,7 +10,7 @@ distributions** so the whole team installs once and pulls updates with one comma
 - `factory/scripts/` — the generation + deterministic-QA scripts.
 - `souls/` — the constitution (`DESIGN-OS.md`) and the source souls.
 - `plan/` — the master plan and the team walkthrough.
-- `sync.sh` (macOS/Linux) and `sync.ps1` (Windows PowerShell) — installs/updates every profile.
+- `sync.sh` (macOS/Linux) and `sync.bat` (Windows — wraps `sync.ps1`) — installs/updates every profile.
 - `.env.example` — the one key you need (your OpenAI key; filled locally, never committed).
 
 ## Secrets — read first
@@ -31,10 +31,13 @@ cp .env.example ~/.hermes/.env   # then paste the real keys
    ```bash
    ./sync.sh
    ```
-   **Windows (PowerShell):**
+   **Windows:** double-click `sync.bat` in Explorer, or run it in a terminal:
    ```powershell
-   .\sync.ps1
+   .\sync.bat
    ```
+   (`sync.bat` runs the PowerShell sync with the execution-policy bypass, so Windows
+   does not block it. If you prefer to run `sync.ps1` directly, use
+   `powershell -ExecutionPolicy Bypass -File .\sync.ps1`.)
    On a fresh machine, also copy `.env.example` to `~/.hermes/.env` and paste the keys
    (if you already use Hermes, your keys are already there — skip this).
 3. Models: **nothing to set.** Each profile inherits the model + provider you already
@@ -50,7 +53,7 @@ cp .env.example ~/.hermes/.env   # then paste the real keys
 When the maintainer pushes new souls/skills:
 ```bash
 git pull
-./sync.sh        # macOS/Linux   —   Windows PowerShell: .\sync.ps1
+./sync.sh        # macOS/Linux   —   Windows: .\sync.bat (or double-click it)
 ```
 Your keys, memories and sessions are preserved — only the souls/skills update.
 
